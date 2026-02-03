@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "../../src/lib/supabase/client";
 import { CATEGORIES } from "../../src/vault/oscars2026/categories";
@@ -9,6 +9,8 @@ import { ROTTEN_BY_TITLE } from "../../src/vault/oscars2026/rotten.manual";
 import BrandLogo from "../../src/components/brand/BrandLogo";
 import type { Category, Nominee } from "../../src/vault/oscars2026/categories";
 
+
+import { InstructionsList } from "../../src/components/vaticine/InstructionsList";
 type Pick = { win?: string; second?: string; fav?: string };
 type PicksByCategory = Record<string, Pick>;
 type SeenByMovie = Record<string, boolean>;
@@ -34,12 +36,56 @@ function clsx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
 }
 
+function PlayIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M8.5 7.7v8.6c0 1 .9 1.6 1.8 1.1l7.3-4.3c.9-.5.9-1.7 0-2.2l-7.3-4.3c-.9-.5-1.8.1-1.8 1.1Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function EyeIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M2.5 12s3.6-7 9.5-7 9.5 7 9.5 7-3.6 7-9.5 7S2.5 12 2.5 12Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 export default function BallotPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen flex items-center justify-center p-6">
+          <div className="text-white/70">Cargando…</div>
+        </main>
+      }
+    >
+      <BallotInner />
+    </Suspense>
+  );
+}
+
+function BallotInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = useMemo(() => createClient(), []);
 
-  const rottenByMovieId = useMemo(() => {
+  
+  const [instructionsOpen, setInstructionsOpen] = useState(false);
+const rottenByMovieId = useMemo(() => {
     const byNormTitle = new Map<string, number | null>();
     for (const r of ROTTEN_BY_TITLE) byNormTitle.set(normalizeTitle(r.title), r.score);
 
@@ -84,7 +130,7 @@ export default function BallotPage() {
     nomineeId: null,
     movieId: null,
   });
-const [media, setMedia] = useState<Record<string, Media>>({});
+  const [media, setMedia] = useState<Record<string, Media>>({});
   const [imdbMap, setImdbMap] = useState<Record<string, string | null>>({});
 
   const activeCategory: Category =
@@ -111,7 +157,7 @@ const [media, setMedia] = useState<Record<string, Media>>({});
 
       if (!user) {
         setStatus("guest");
-        router.replace("/login");
+        // modo invitado: no redirigir a /login
         return;
       }
 
@@ -163,7 +209,7 @@ const [media, setMedia] = useState<Record<string, Media>>({});
         const res = await fetch("/api/tmdb/movies");
         const json = await res.json();
         if (res.ok) setMedia(json);
-      } catch {}
+      } catch { }
     })();
 
     // IMDb rating (OMDb)
@@ -178,13 +224,13 @@ const [media, setMedia] = useState<Record<string, Media>>({});
           next[k] = json[k]?.imdbRating ?? null;
         }
         setImdbMap(next);
-      } catch {}
+      } catch { }
     })();
   }, []);
 
   async function logout() {
     await supabase.auth.signOut();
-    router.replace("/login");
+        // modo invitado: no redirigir a /login
   }
 
   async function setSeen(movieId: string, value: boolean) {
@@ -192,7 +238,7 @@ const [media, setMedia] = useState<Record<string, Media>>({});
     setMsg(null);
 
     if (!userId) {
-      setMsg("No hay sesión. Vuelve a entrar.");
+      setMsg("__LOGIN_TO_SAVE__");
       return;
     }
 
@@ -252,7 +298,7 @@ const [media, setMedia] = useState<Record<string, Media>>({});
         else if (patch.second) next.win = undefined;
         else next.second = undefined;
       }
-// Si elijo win y coincide con second, limpiamos second (y viceversa)
+      // Si elijo win y coincide con second, limpiamos second (y viceversa)
       if (patch.win && current.second === patch.win) next.second = undefined;
       if (patch.second && current.win === patch.second) next.win = undefined;
 
@@ -274,12 +320,12 @@ const [media, setMedia] = useState<Record<string, Media>>({});
     setSavedMsg(null);
 
     if (!userId) {
-      setMsg("No hay sesión. Vuelve a entrar.");
+      setMsg("__LOGIN_TO_SAVE__");
       return;
     }
 
     const v = picks[activeCategoryId] ?? {};
-setSaving(true);
+    setSaving(true);
 
     const payload = {
       user_id: userId,
@@ -312,22 +358,37 @@ setSaving(true);
     );
   }
 
-  if (status === "guest") {
-    return (
-      <main className="min-h-screen flex items-center justify-center p-6">
-        <div className="text-white/70">Redirigiendo a login…</div>
-      </main>
-    );
-  }
-
-  const currentPick = picks[activeCategoryId] ?? {};
+    const currentPick = picks[activeCategoryId] ?? {};
 
   return (
     <main className="min-h-screen p-6 flex justify-center">
       <div className="w-full max-w-5xl">
         <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <h1 className="text-3xl font-semibold">vatiCINE</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-semibold">vatiCINE</h1>
+              <button
+                type="button"
+                className="group inline-flex h-11 w-11 items-center justify-center rounded-full
+             border border-white/15
+             bg-gradient-to-br from-sky-500/35 via-indigo-500/25 to-fuchsia-500/30
+             shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_10px_30px_rgba(56,189,248,0.18)]
+             hover:border-white/25 hover:from-sky-500/45 hover:via-indigo-500/35 hover:to-fuchsia-500/40
+             hover:shadow-[0_0_0_1px_rgba(255,255,255,0.10),0_14px_40px_rgba(236,72,153,0.18)]
+             active:scale-[0.98] transition"
+                aria-label="Estadísticas"
+                title="Estadísticas"
+                onClick={() => router.push("/estadisticas")}
+              >
+                <span className="flex items-end gap-1" aria-hidden="true">
+  <span className="h-3.5 w-1.5 rounded-full bg-gradient-to-b from-sky-300 to-sky-500 shadow-[0_0_12px_rgba(56,189,248,0.35)]" />
+  <span className="h-6 w-1.5 rounded-full bg-gradient-to-b from-indigo-300 to-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.35)]" />
+  <span className="h-4.5 w-1.5 rounded-full bg-gradient-to-b from-fuchsia-300 to-fuchsia-500 shadow-[0_0_12px_rgba(232,121,249,0.35)]" />
+</span>
+
+              </button>
+
+            </div>
 
             {isClosed ? (
               <div className="mt-3 rounded-xl border border-white/15 bg-black/40 p-3 text-sm text-white/80">
@@ -339,7 +400,7 @@ setSaving(true);
 
             {msg ? (
               <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">
-                {msg}
+                {msg === "__LOGIN_TO_SAVE__" ? (<a href="/login" className="underline underline-offset-2 hover:text-white">Inicia sesión para guardar</a>) : (msg)}
               </div>
             ) : null}
 
@@ -353,9 +414,9 @@ setSaving(true);
           <div className="flex flex-wrap gap-2">
             <button
               className="rounded-xl border border-white/15 bg-black/40 px-4 py-2 font-medium"
-              onClick={() => router.replace("/")}
+              onClick={() => setInstructionsOpen(true)}
             >
-              Inicio
+              Instrucciones
             </button>
 
             {!isClosed ? (
@@ -377,10 +438,28 @@ setSaving(true);
             >
               Cerrar sesión
             </button>
-          </div>
-        </header>
+          </div>        </header>
 
-        {seenDialog.open ? (
+        {instructionsOpen ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+            <div className="w-full max-w-2xl rounded-2xl border border-white/15 bg-black/90 p-4 shadow-2xl">
+              <div className="text-lg font-semibold text-white">Instrucciones</div>
+              <div className="mt-3">
+                <InstructionsList />
+              </div>
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="button"
+                  className="rounded-xl border border-white/15 bg-black/40 px-4 py-2 text-sm font-medium hover:border-white/30"
+                  onClick={() => setInstructionsOpen(false)}
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+{seenDialog.open ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
             <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-black/90 p-4 shadow-2xl">
               <div className="text-lg font-semibold">¿Ya la viste?</div>
@@ -408,7 +487,7 @@ setSaving(true);
                     if (!nomineeId || !movieId) return;
                     void setSeen(movieId, true);
                     // Refuerzo: garantiza que el checkbox quede marcado de inmediato
-updatePick(activeCategoryId, { fav: nomineeId });
+                    updatePick(activeCategoryId, { fav: nomineeId });
                   }}
                 >
                   Sí
@@ -417,61 +496,61 @@ updatePick(activeCategoryId, { fav: nomineeId });
             </div>
           </div>
         ) : null}
-<div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-3">
+        <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-3">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
               <h2 className="text-xl font-semibold">{activeCategory?.name ?? "Categoría"}</h2>
-              </div>
+            </div>
 
             <div className="flex items-center gap-2">
-  <button
-    type="button"
-    aria-label="Categoría anterior"
-    className="rounded-xl border border-white/15 bg-black/40 px-3 py-2 text-sm font-medium hover:border-white/30 disabled:opacity-40"
-    onClick={() => {
-      setSavedMsg(null);
-      setMsg(null);
-      const idx = CATEGORIES.findIndex((x) => x.id === activeCategoryId);
-      const prev = idx <= 0 ? CATEGORIES.length - 1 : idx - 1;
-      setActiveCategoryId(CATEGORIES[prev]!.id);
-    }}
-  >
-    ←
-  </button>
+              <button
+                type="button"
+                aria-label="Categoría anterior"
+                className="rounded-xl border border-white/15 bg-black/40 px-3 py-2 text-sm font-medium hover:border-white/30 disabled:opacity-40"
+                onClick={() => {
+                  setSavedMsg(null);
+                  setMsg(null);
+                  const idx = CATEGORIES.findIndex((x) => x.id === activeCategoryId);
+                  const prev = idx <= 0 ? CATEGORIES.length - 1 : idx - 1;
+                  setActiveCategoryId(CATEGORIES[prev]!.id);
+                }}
+              >
+                ←
+              </button>
 
-  <div className="min-w-[240px]">
-    <select
-      className="w-full rounded-xl border border-white/15 bg-black/40 px-3 py-2 text-sm font-medium text-white hover:border-white/30"
-      value={activeCategoryId}
-      onChange={(e) => {
-        setSavedMsg(null);
-        setMsg(null);
-        setActiveCategoryId(e.target.value);
-      }}
-    >
-      {CATEGORIES.map((c: Category) => (
-        <option key={c.id} value={c.id}>
-          {c.name}
-        </option>
-      ))}
-    </select>
-  </div>
+              <div className="min-w-[240px]">
+                <select
+                  className="w-full rounded-xl border border-white/15 bg-black/40 px-3 py-2 text-sm font-medium text-white hover:border-white/30"
+                  value={activeCategoryId}
+                  onChange={(e) => {
+                    setSavedMsg(null);
+                    setMsg(null);
+                    setActiveCategoryId(e.target.value);
+                  }}
+                >
+                  {CATEGORIES.map((c: Category) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-  <button
-    type="button"
-    aria-label="Categoría siguiente"
-    className="rounded-xl border border-white/15 bg-black/40 px-3 py-2 text-sm font-medium hover:border-white/30 disabled:opacity-40"
-    onClick={() => {
-      setSavedMsg(null);
-      setMsg(null);
-      const idx = CATEGORIES.findIndex((x) => x.id === activeCategoryId);
-      const next = idx >= CATEGORIES.length - 1 ? 0 : idx + 1;
-      setActiveCategoryId(CATEGORIES[next]!.id);
-    }}
-  >
-    →
-  </button>
-</div>
+              <button
+                type="button"
+                aria-label="Categoría siguiente"
+                className="rounded-xl border border-white/15 bg-black/40 px-3 py-2 text-sm font-medium hover:border-white/30 disabled:opacity-40"
+                onClick={() => {
+                  setSavedMsg(null);
+                  setMsg(null);
+                  const idx = CATEGORIES.findIndex((x) => x.id === activeCategoryId);
+                  const next = idx >= CATEGORIES.length - 1 ? 0 : idx + 1;
+                  setActiveCategoryId(CATEGORIES[next]!.id);
+                }}
+              >
+                →
+              </button>
+            </div>
           </div>
 
           <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -495,71 +574,71 @@ updatePick(activeCategoryId, { fav: nomineeId });
                     ) : (
                       <div className="text-white/40 text-sm">Poster</div>
                     )}
-                                    {/* Botones flotantes sobre el póster */}
-                  <div className="absolute inset-x-2 bottom-2 z-10 flex gap-2">
-                    <button
-                      className={clsx(
-                        "flex-1 rounded-lg px-2 py-2 text-xs font-semibold border backdrop-blur",
-                        isWin
-                          ? "bg-white text-black border-white"
-                          : "bg-black/35 text-white border-white/20 hover:border-white/35"
-                      )}
-                      onClick={() => {
-                        if (isClosed) return;
-                        updatePick(activeCategoryId, { win: isWin ? undefined : n.id });
-                      }}
-                    >
-                      Gana
-                    </button>
+                    {/* Botones flotantes sobre el póster */}
+                    <div className="absolute inset-x-2 bottom-2 z-10 flex gap-2">
+                      <button
+                        className={clsx(
+                          "flex-1 rounded-lg px-2 py-2 text-xs font-semibold border backdrop-blur",
+                          isWin
+                            ? "bg-white text-black border-white"
+                            : "bg-black/35 text-white border-white/20 hover:border-white/35"
+                        )}
+                        onClick={() => {
+                          if (isClosed) return;
+                          updatePick(activeCategoryId, { win: isWin ? undefined : n.id });
+                        }}
+                      >
+                        Gana
+                      </button>
 
-                    <button
-                      className={clsx(
-                        "flex-1 rounded-lg px-2 py-2 text-xs font-semibold border backdrop-blur",
-                        isSecond
-                          ? "bg-white text-black border-white"
-                          : "bg-black/35 text-white border-white/20 hover:border-white/35"
-                      )}
-                      onClick={() => {
-                        if (isClosed) return;
-                        updatePick(activeCategoryId, { second: isSecond ? undefined : n.id });
-                      }}
-                    >
-                      2da
-                    </button>
+                      <button
+                        className={clsx(
+                          "flex-1 rounded-lg px-2 py-2 text-xs font-semibold border backdrop-blur",
+                          isSecond
+                            ? "bg-white text-black border-white"
+                            : "bg-black/35 text-white border-white/20 hover:border-white/35"
+                        )}
+                        onClick={() => {
+                          if (isClosed) return;
+                          updatePick(activeCategoryId, { second: isSecond ? undefined : n.id });
+                        }}
+                      >
+                        2da
+                      </button>
 
-                    <button
-                      className={clsx(
-                        "flex-1 rounded-lg px-2 py-2 text-xs font-semibold border backdrop-blur",
-                        !hasSeen && "opacity-70",
-                        isFav
-                          ? "bg-white text-black border-white"
-                          : "bg-black/35 text-white border-white/20 hover:border-white/35"
-                      )}
-                      onClick={() => {
-                        if (isClosed) return;
+                      <button
+                        className={clsx(
+                          "flex-1 rounded-lg px-2 py-2 text-xs font-semibold border backdrop-blur",
+                          !hasSeen && "opacity-70",
+                          isFav
+                            ? "bg-white text-black border-white"
+                            : "bg-black/35 text-white border-white/20 hover:border-white/35"
+                        )}
+                        onClick={() => {
+                          if (isClosed) return;
 
-                        // Si ya es favorita, permitir apagarla sin diálogo
-                        if (isFav) {
-                          updatePick(activeCategoryId, { fav: undefined });
-                          return;
-                        }
+                          // Si ya es favorita, permitir apagarla sin diálogo
+                          if (isFav) {
+                            updatePick(activeCategoryId, { fav: undefined });
+                            return;
+                          }
 
-                        // Si no la ha visto, preguntar
-                        if (!hasSeen) {
-                          setMsg(null);
-                          setSavedMsg(null);
-                          setSeenDialog({ open: true, nomineeId: n.id, movieId });
-                          return;
-                        }
+                          // Si no la ha visto, preguntar
+                          if (!hasSeen) {
+                            setMsg(null);
+                            setSavedMsg(null);
+                            setSeenDialog({ open: true, nomineeId: n.id, movieId });
+                            return;
+                          }
 
-                        // Si ya la vio, marcar favorita
-                        updatePick(activeCategoryId, { fav: isFav ? undefined : n.id });
-                      }}
-                      disabled={isClosed}
-                    >
-                      Favorita
-                    </button>
-                  </div>
+                          // Si ya la vio, marcar favorita
+                          updatePick(activeCategoryId, { fav: isFav ? undefined : n.id });
+                        }}
+                        disabled={isClosed}
+                      >
+                        Favorita
+                      </button>
+                    </div>
 
                   </div>
 
@@ -568,43 +647,67 @@ updatePick(activeCategoryId, { fav: nomineeId });
                     {n.subtitle && activeCategoryId !== "best_picture" ? <div className="text-sm text-white/70">{n.subtitle}</div> : null}
                   </div>
 
-                  <div className="mt-2 flex gap-2 items-center">
-                    {m?.trailerUrl ? (
-                      <a
-                        href={m.trailerUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="rounded-lg px-3 py-2 text-sm font-medium border bg-black/40 text-white border-white/15 hover:border-white/30"
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      {m?.trailerUrl ? (
+                        <a
+                          href={m.trailerUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur hover:border-white/35 hover:bg-white/15"
+                          aria-label="Ver tráiler"
+                          title="Ver tráiler"
+                        >
+                          <PlayIcon className="h-7 w-7" />
+                        </a>
+                      ) : (
+                        <span
+                          className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 opacity-35"
+                          aria-hidden="true"
+                          title="Sin tráiler"
+                        >
+                          <PlayIcon className="h-6 w-6" />
+                        </span>
+                      )}
+
+                      <button
+                        type="button"
+                        className={clsx(
+                          "inline-flex h-14 w-14 items-center justify-center rounded-full border backdrop-blur transition-colors",
+                          hasSeen
+                            ? "bg-emerald-500/25 border-emerald-300/40 text-emerald-200 hover:bg-emerald-500/35 hover:border-emerald-200/60"
+                            : "bg-white/10 border-white/20 text-white/80 hover:bg-white/15 hover:border-white/35"
+                        )}
+                        onClick={() => {
+                          if (isClosed) return;
+                          void setSeen(movieId, !hasSeen);
+                        }}
+                        disabled={isClosed}
+                        aria-pressed={hasSeen}
+                        aria-label={hasSeen ? "Ya la vi" : "Marcar como vista"}
+                        title={hasSeen ? "Ya la vi" : "Marcar como vista"}
                       >
-                        Ver tráiler
-                      </a>
-                    ) : (
-                      <div className="text-xs text-white/50">Tráiler: —</div>
-                    )}
-                  </div>
+                        <EyeIcon className="h-7 w-7" />
+                      </button>
+                    </div>
 
-                  <label className="mt-3 flex items-center gap-2 text-sm text-white/80">
-                    <input
-                      type="checkbox"
-                      checked={hasSeen}
-                      onChange={(e) => {
-                        if (isClosed) return;
-                        void setSeen(movieId, e.target.checked);
-                      }}
-                    />
-                    Ya la vi
-                  </label>
+                    <div className="flex items-center gap-4 whitespace-nowrap text-[16px] font-medium tabular-nums text-white/90">
+                      <span className="inline-flex items-center gap-2">
+                        <span className="scale-105 origin-left">
+                          <BrandLogo kind="imdb" />
+                        </span>
+                        <span>{imdb ?? "—"}</span>
+                      </span>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-white/80">
-                    <span className="inline-flex items-center gap-2">
-                      <BrandLogo kind="imdb" />
-                      <span>{imdb ?? "—"}</span>
-                    </span>
-
-                    <span className="inline-flex items-center gap-2">
-                      <BrandLogo kind="rt" />
-                      <span>{rottenByMovieId[movieId] ?? "—"}</span>
-                    </span>
+                      <span className="inline-flex items-center gap-2">
+                        <img
+                          src="/brands/Fresh_Tomato_logo.svg"
+                          alt="Rotten Tomatoes"
+                          className="h-8 w-8"
+                        />
+                        <span>{rottenByMovieId[movieId] ?? "—"}</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
@@ -615,6 +718,17 @@ updatePick(activeCategoryId, { fav: nomineeId });
     </main>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 

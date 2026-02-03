@@ -2,6 +2,8 @@
   id: string;
   title: string;          // Título original
   titleCo?: string | null; // (Opcional) título oficial en Colombia si difiere
+  imdbId?: string | null; // (Opcional) IMDb ID (tt...)
+  tmdbId?: number | null; // (Opcional) TMDB ID (numérico)
 };
 
 export const MOVIES: Movie[] = [
@@ -77,3 +79,4 @@ export const MOVIES: Movie[] = [
   { id: "diane_warren_relentless", title: "Diane Warren: Relentless", titleCo: null },
   { id: "viva_verdi", title: "Viva Verdi!", titleCo: null },
 ];
+
