@@ -325,17 +325,20 @@ function BallotInner() {
       return;
     }
 
-    const v = picks[activeCategoryId] ?? {};
     setSaving(true);
 
-    const payload = {
-      user_id: userId,
-      category_id: activeCategoryId,
-      win: v.win ?? null,
-      second: v.second && v.second !== v.win ? v.second : null,
-      fav: v.fav ?? null,
-      updated_at: new Date().toISOString(),
-    };
+    const now = new Date().toISOString();
+    const payload = CATEGORIES.map((c) => {
+      const v = picks[c.id] ?? {};
+      return {
+        user_id: userId,
+        category_id: c.id,
+        win: v.win ?? null,
+        second: v.second && v.second !== v.win ? v.second : null,
+        fav: v.fav ?? null,
+        updated_at: now,
+      };
+    });
 
     const { error } = await supabase
       .from("votes")
@@ -776,6 +779,8 @@ function BallotInner() {
     </main>
   );
 }
+
+
 
 
 
