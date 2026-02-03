@@ -83,9 +83,9 @@ function BallotInner() {
   const searchParams = useSearchParams();
   const supabase = useMemo(() => createClient(), []);
 
-  
+
   const [instructionsOpen, setInstructionsOpen] = useState(false);
-const rottenByMovieId = useMemo(() => {
+  const rottenByMovieId = useMemo(() => {
     const byNormTitle = new Map<string, number | null>();
     for (const r of ROTTEN_BY_TITLE) byNormTitle.set(normalizeTitle(r.title), r.score);
 
@@ -230,7 +230,7 @@ const rottenByMovieId = useMemo(() => {
 
   async function logout() {
     await supabase.auth.signOut();
-        // modo invitado: no redirigir a /login
+    // modo invitado: no redirigir a /login
   }
 
   async function setSeen(movieId: string, value: boolean) {
@@ -358,7 +358,7 @@ const rottenByMovieId = useMemo(() => {
     );
   }
 
-    const currentPick = picks[activeCategoryId] ?? {};
+  const currentPick = picks[activeCategoryId] ?? {};
 
   return (
     <main className="min-h-screen p-6 flex justify-center">
@@ -367,27 +367,6 @@ const rottenByMovieId = useMemo(() => {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-semibold">vatiCINE</h1>
-              <button
-                type="button"
-                className="group inline-flex h-11 w-11 items-center justify-center rounded-full
-             border border-white/15
-             bg-gradient-to-br from-sky-500/35 via-indigo-500/25 to-fuchsia-500/30
-             shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_10px_30px_rgba(56,189,248,0.18)]
-             hover:border-white/25 hover:from-sky-500/45 hover:via-indigo-500/35 hover:to-fuchsia-500/40
-             hover:shadow-[0_0_0_1px_rgba(255,255,255,0.10),0_14px_40px_rgba(236,72,153,0.18)]
-             active:scale-[0.98] transition"
-                aria-label="Estadísticas"
-                title="Estadísticas"
-                onClick={() => router.push("/estadisticas")}
-              >
-                <span className="flex items-end gap-1" aria-hidden="true">
-  <span className="h-3.5 w-1.5 rounded-full bg-gradient-to-b from-sky-300 to-sky-500 shadow-[0_0_12px_rgba(56,189,248,0.35)]" />
-  <span className="h-6 w-1.5 rounded-full bg-gradient-to-b from-indigo-300 to-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.35)]" />
-  <span className="h-4.5 w-1.5 rounded-full bg-gradient-to-b from-fuchsia-300 to-fuchsia-500 shadow-[0_0_12px_rgba(232,121,249,0.35)]" />
-</span>
-
-              </button>
-
             </div>
 
             {isClosed ? (
@@ -412,6 +391,14 @@ const rottenByMovieId = useMemo(() => {
           </div>
 
           <div className="flex flex-wrap gap-2">
+            {status === "guest" ? (
+              <a
+                href="/login"
+                className="rounded-xl border border-white/15 bg-black/40 px-4 py-2 font-medium"
+              >
+                Acceder
+              </a>
+            ) : null}
             <button
               className="rounded-xl border border-white/15 bg-black/40 px-4 py-2 font-medium"
               onClick={() => setInstructionsOpen(true)}
@@ -432,12 +419,15 @@ const rottenByMovieId = useMemo(() => {
               </button>
             ) : null}
 
-            <button
-              className="rounded-xl border border-white/15 bg-black/40 px-4 py-2 font-medium"
-              onClick={logout}
-            >
-              Cerrar sesión
-            </button>
+            {status === "ok" ? (
+              <button
+                className="rounded-xl border border-white/15 bg-black/40 px-4 py-2 font-medium"
+                onClick={logout}
+              >
+                Cerrar sesión
+              </button>
+            ) : null}
+
           </div>        </header>
 
         {instructionsOpen ? (
@@ -459,7 +449,7 @@ const rottenByMovieId = useMemo(() => {
             </div>
           </div>
         ) : null}
-{seenDialog.open ? (
+        {seenDialog.open ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
             <div className="w-full max-w-sm rounded-2xl border border-white/15 bg-black/90 p-4 shadow-2xl">
               <div className="text-lg font-semibold">¿Ya la viste?</div>
@@ -506,7 +496,7 @@ const rottenByMovieId = useMemo(() => {
               <button
                 type="button"
                 aria-label="Categoría anterior"
-                className="rounded-xl border border-white/15 bg-black/40 px-3 py-2 text-sm font-medium hover:border-white/30 disabled:opacity-40"
+                className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/15 bg-black/40 text-xl font-black text-yellow-300 hover:border-white/30 disabled:opacity-40"
                 onClick={() => {
                   setSavedMsg(null);
                   setMsg(null);
@@ -514,9 +504,7 @@ const rottenByMovieId = useMemo(() => {
                   const prev = idx <= 0 ? CATEGORIES.length - 1 : idx - 1;
                   setActiveCategoryId(CATEGORIES[prev]!.id);
                 }}
-              >
-                ←
-              </button>
+              >◀</button>
 
               <div className="min-w-[240px]">
                 <select
@@ -539,7 +527,7 @@ const rottenByMovieId = useMemo(() => {
               <button
                 type="button"
                 aria-label="Categoría siguiente"
-                className="rounded-xl border border-white/15 bg-black/40 px-3 py-2 text-sm font-medium hover:border-white/30 disabled:opacity-40"
+                className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/15 bg-black/40 text-xl font-black text-yellow-300 hover:border-white/30 disabled:opacity-40"
                 onClick={() => {
                   setSavedMsg(null);
                   setMsg(null);
@@ -547,9 +535,7 @@ const rottenByMovieId = useMemo(() => {
                   const next = idx >= CATEGORIES.length - 1 ? 0 : idx + 1;
                   setActiveCategoryId(CATEGORIES[next]!.id);
                 }}
-              >
-                →
-              </button>
+              >▶</button>
             </div>
           </div>
 
@@ -712,12 +698,71 @@ const rottenByMovieId = useMemo(() => {
                 </div>
               );
             })}
+            <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-3">
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  type="button"
+                  aria-label="Categoría anterior (abajo)"
+                  className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/15 bg-black/40 text-xl font-black text-yellow-300 hover:border-white/30 disabled:opacity-40"
+                  onClick={() => {
+                    setSavedMsg(null);
+                    setMsg(null);
+                    const idx = CATEGORIES.findIndex((x) => x.id === activeCategoryId);
+                    const prev = idx <= 0 ? CATEGORIES.length - 1 : idx - 1;
+                    setActiveCategoryId(CATEGORIES[prev]!.id);
+                  }}
+                >
+                  ◀
+                </button>
+
+                <div className="min-w-[240px]">
+                  <select
+                    className="w-full rounded-xl border border-white/15 bg-black/40 px-3 py-2 text-sm font-medium text-white hover:border-white/30"
+                    value={activeCategoryId}
+                    onChange={(e) => {
+                      setSavedMsg(null);
+                      setMsg(null);
+                      setActiveCategoryId(e.target.value);
+                    }}
+                  >
+                    {CATEGORIES.map((c: Category) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  aria-label="Categoría siguiente (abajo)"
+                  className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/15 bg-black/40 text-xl font-black text-yellow-300 hover:border-white/30 disabled:opacity-40"
+                  onClick={() => {
+                    setSavedMsg(null);
+                    setMsg(null);
+                    const idx = CATEGORIES.findIndex((x) => x.id === activeCategoryId);
+                    const next = idx >= CATEGORIES.length - 1 ? 0 : idx + 1;
+                    setActiveCategoryId(CATEGORIES[next]!.id);
+                  }}
+                >
+                  ▶
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
     </main>
   );
 }
+
+
+
+
+
+
+
 
 
 
