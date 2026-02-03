@@ -14,10 +14,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "vatiCINE",
-  description: "Boleta Oscar 2026 para votar con amigos y familia.",
+  description: "¿Tienes el talento para ser jurado del Oscar?",
   openGraph: {
     title: "vatiCINE",
-    description: "Boleta Oscar 2026 para votar con amigos y familia.",
+    description: "¿Tienes el talento para ser jurado del Oscar?",
     url: "https://vaticine.vercel.app",
     siteName: "vatiCINE",
     images: [
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "vatiCINE",
-    description: "Boleta Oscar 2026 para votar con amigos y familia.",
+    description: "¿Tienes el talento para ser jurado del Oscar?",
     images: ["/twitter-image.png"],
   },
 };
@@ -52,3 +52,4 @@ export default function RootLayout({
     </html>
   );
 }
+
