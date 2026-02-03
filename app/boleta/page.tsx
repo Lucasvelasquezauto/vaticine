@@ -368,6 +368,25 @@ function BallotInner() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-semibold">vatiCINE</h1>
+              <button
+                type="button"
+                className="group inline-flex h-11 w-11 items-center justify-center rounded-full
+             border border-white/15
+             bg-gradient-to-br from-sky-500/35 via-indigo-500/25 to-fuchsia-500/30
+             shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_10px_30px_rgba(56,189,248,0.18)]
+             hover:border-white/25 hover:from-sky-500/45 hover:via-indigo-500/35 hover:to-fuchsia-500/40
+             hover:shadow-[0_0_0_1px_rgba(255,255,255,0.10),0_14px_40px_rgba(236,72,153,0.18)]
+             active:scale-[0.98] transition"
+                aria-label="Estadísticas"
+                title="Estadísticas"
+                onClick={() => router.push("/estadisticas")}
+              >
+                <span className="flex items-end gap-1" aria-hidden="true">
+                  <span className="h-3.5 w-1.5 rounded-full bg-gradient-to-b from-sky-300 to-sky-500 shadow-[0_0_12px_rgba(56,189,248,0.35)]" />
+                  <span className="h-6 w-1.5 rounded-full bg-gradient-to-b from-indigo-300 to-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.35)]" />
+                  <span className="h-4.5 w-1.5 rounded-full bg-gradient-to-b from-fuchsia-300 to-fuchsia-500 shadow-[0_0_12px_rgba(232,121,249,0.35)]" />
+                </span>
+              </button>
             </div>
 
             {isClosed ? (
@@ -757,6 +776,9 @@ function BallotInner() {
     </main>
   );
 }
+
+
+
 
 
 
