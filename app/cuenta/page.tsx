@@ -39,7 +39,7 @@ export default function CuentaPage() {
 
   async function logout() {
     await supabase.auth.signOut();
-    router.replace("/login");
+    window.location.href = "/login";
   }
 
   if (status === "checking") {
@@ -84,3 +84,5 @@ export default function CuentaPage() {
     </main>
   );
 }
+
+

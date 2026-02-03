@@ -230,6 +230,7 @@ function BallotInner() {
 
   async function logout() {
     await supabase.auth.signOut();
+    window.location.reload();
     // modo invitado: no redirigir a /login
   }
 
@@ -756,6 +757,8 @@ function BallotInner() {
     </main>
   );
 }
+
+
 
 
 
