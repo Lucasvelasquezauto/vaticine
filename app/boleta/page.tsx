@@ -390,6 +390,21 @@ function BallotInner() {
                   <span className="h-4.5 w-1.5 rounded-full bg-gradient-to-b from-fuchsia-300 to-fuchsia-500 shadow-[0_0_12px_rgba(232,121,249,0.35)]" />
                 </span>
               </button>
+
+              {status === "ok" ? (
+  <button
+    className="h-10 w-10 rounded-xl border border-white/15 bg-black/40 p-0 shadow-[0_0_0_1px_rgba(255,255,255,0.06)] hover:border-white/25 hover:bg-black/55 active:scale-[0.98] transition grid place-items-center"
+    aria-label="Descargar PDF"
+    title="Descargar PDF"
+    disabled={saving}
+    onClick={async () => {
+      if (!isClosed) await saveCurrentCategory();
+      window.location.href = "/api/pdf/boleta";
+    }}
+  >
+    <img src="/icons/pdf.png" alt="PDF" className="h-7 w-7" />
+  </button>
+) : null}
             </div>
 
             {isClosed ? (
@@ -779,6 +794,12 @@ function BallotInner() {
     </main>
   );
 }
+
+
+
+
+
+
 
 
 

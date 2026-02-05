@@ -1,0 +1,119 @@
+﻿import { CATEGORIES } from "../../../vault/oscars2026/categories";
+import { MOVIES } from "../../../vault/oscars2026/movies";
+
+export type VotesRow = {
+  category_id: string;
+  win: string | null;
+  second: string | null;
+  fav: string | null;
+};
+
+export type SeenRow = {
+  movie_id: string;
+};
+
+function movieTitleFromId(movieId: string | null | undefined, movieById: Map<string, { title: string; titleCo?: string | null }>) {
+  if (!movieId) return "";
+  const m = movieById.get(movieId);
+  if (!m) return "";
+  const t = (m.titleCo && m.titleCo.trim()) ? m.titleCo.trim() : m.title;
+  return t || "";
+}
+
+export function buildPdfData(args: {
+  userName: string;
+  printDate: string; // YYYY-MM-DD
+  votes: VotesRow[];
+  seen: SeenRow[];
+}) {
+  const { userName, printDate, votes, seen } = args;
+
+  const categoryById = new Map(CATEGORIES.map((c) => [c.id, c]));
+  const movieById = new Map(MOVIES.map((m) => [m.id, m]));
+  const seenSet = new Set(seen.map((s) => s.movie_id));
+
+  // Categorías en Page 2: imprimir SOLO nombre de película (no nominado)
+  const movieOnlyCats = new Set<string>([
+    "animated_feature",
+    "animated_short",
+    "casting",
+    "costume_design",
+    "documentary_feature",
+    "documentary_short",
+    "film_editing",
+    "international_feature",
+    "live_action_short",
+    "makeup_hairstyling",
+    "production_design",
+    "score_original",
+    "song_original",
+    "sound",
+    "visual_effects",
+  ]);
+
+  // category selections → texto
+  const categoriesOut: Record<
+    string,
+    { win?: string; runner_up?: string; fav?: string }
+  > = {};
+
+  for (const v of votes) {
+    const cat = categoryById.get(v.category_id);
+    if (!cat) continue;
+
+    const nomineeById = new Map(cat.nominees.map((n) => [n.id, n]));
+    const isMovieOnly = movieOnlyCats.has(cat.id);
+
+    const winNom = v.win ? nomineeById.get(v.win) : null;
+    const secNom = v.second ? nomineeById.get(v.second) : null;
+    const favNom = v.fav ? nomineeById.get(v.fav) : null;
+
+    categoriesOut[cat.id] = {
+      win: isMovieOnly
+        ? movieTitleFromId(winNom?.movieId, movieById)
+        : winNom
+          ? winNom.subtitle
+            ? `${winNom.title} — ${winNom.subtitle}`
+            : winNom.title
+          : "",
+      runner_up: isMovieOnly
+        ? movieTitleFromId(secNom?.movieId, movieById)
+        : secNom
+          ? secNom.subtitle
+            ? `${secNom.title} — ${secNom.subtitle}`
+            : secNom.title
+          : "",
+      fav: isMovieOnly
+        ? movieTitleFromId(favNom?.movieId, movieById)
+        : favNom
+          ? favNom.subtitle
+            ? `${favNom.title} — ${favNom.subtitle}`
+            : favNom.title
+          : "",
+    };
+  }
+
+  // Listas C:
+  // - seen_movies = todas las del vault que estén en seen_movies
+  // - to_watch_movies = todas las del vault que NO estén en seen_movies
+  const allMovieTitles = MOVIES.map((m) => ({
+    id: m.id,
+    title: m.titleCo && m.titleCo.trim() ? m.titleCo.trim() : m.title,
+  }));
+
+  const seenMovies = allMovieTitles
+    .filter((m) => seenSet.has(m.id))
+    .map((m) => m.title);
+
+  const toWatchMovies = allMovieTitles
+    .filter((m) => !seenSet.has(m.id))
+    .map((m) => m.title);
+
+  return {
+    user_name: userName,
+    print_date: printDate,
+    categories: categoriesOut,
+    seen_movies: seenMovies,
+    to_watch_movies: toWatchMovies,
+  };
+}

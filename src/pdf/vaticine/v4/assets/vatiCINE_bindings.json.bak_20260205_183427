@@ -1,0 +1,136 @@
+{
+  "meta": {
+    "header_user_date_field": "header_user_date",
+    "header_user_field": "header_user",
+    "seen_list_field": "seen_list",
+    "to_watch_list_field": "to_watch_list"
+  },
+  "bindings": {
+    "header_user_date": {
+      "user_name": "user_name",
+      "print_date": "print_date",
+      "format": "{user_name} · {print_date}"
+    },
+    "header_user": {
+      "user_name": "user_name"
+    },
+    "categories": {
+      "best_picture": {
+        "win": "best_picture.win",
+        "runner_up": "best_picture.runner_up",
+        "fav": "best_picture.fav"
+      },
+      "directing": {
+        "win": "directing.win",
+        "runner_up": "directing.runner_up"
+      },
+      "actor_leading": {
+        "win": "actor_leading.win",
+        "runner_up": "actor_leading.runner_up"
+      },
+      "actress_leading": {
+        "win": "actress_leading.win",
+        "runner_up": "actress_leading.runner_up"
+      },
+      "actor_supporting": {
+        "win": "actor_supporting.win",
+        "runner_up": "actor_supporting.runner_up"
+      },
+      "actress_supporting": {
+        "win": "actress_supporting.win",
+        "runner_up": "actress_supporting.runner_up"
+      },
+      "screenplay_original": {
+        "win": "screenplay_original.win",
+        "runner_up": "screenplay_original.runner_up"
+      },
+      "screenplay_adapted": {
+        "win": "screenplay_adapted.win",
+        "runner_up": "screenplay_adapted.runner_up"
+      },
+      "animated_feature": {
+        "win": "animated_feature.win",
+        "runner_up": "animated_feature.runner_up",
+        "fav": "animated_feature.fav"
+      },
+      "animated_short": {
+        "win": "animated_short.win",
+        "runner_up": "animated_short.runner_up",
+        "fav": "animated_short.fav"
+      },
+      "casting": {
+        "win": "casting.win",
+        "runner_up": "casting.runner_up",
+        "fav": "casting.fav"
+      },
+      "cinematography": {
+        "win": "cinematography.win",
+        "runner_up": "cinematography.runner_up"
+      },
+      "costume_design": {
+        "win": "costume_design.win",
+        "runner_up": "costume_design.runner_up",
+        "fav": "costume_design.fav"
+      },
+      "film_editing": {
+        "win": "film_editing.win",
+        "runner_up": "film_editing.runner_up",
+        "fav": "film_editing.fav"
+      },
+      "international_feature": {
+        "win": "international_feature.win",
+        "runner_up": "international_feature.runner_up",
+        "fav": "international_feature.fav"
+      },
+      "documentary_feature": {
+        "win": "documentary_feature.win",
+        "runner_up": "documentary_feature.runner_up",
+        "fav": "documentary_feature.fav"
+      },
+      "documentary_short": {
+        "win": "documentary_short.win",
+        "runner_up": "documentary_short.runner_up",
+        "fav": "documentary_short.fav"
+      },
+      "live_action_short": {
+        "win": "live_action_short.win",
+        "runner_up": "live_action_short.runner_up",
+        "fav": "live_action_short.fav"
+      },
+      "makeup_hairstyling": {
+        "win": "makeup_hairstyling.win",
+        "runner_up": "makeup_hairstyling.runner_up",
+        "fav": "makeup_hairstyling.fav"
+      },
+      "score_original": {
+        "win": "score_original.win",
+        "runner_up": "score_original.runner_up",
+        "fav": "score_original.fav"
+      },
+      "song_original": {
+        "win": "song_original.win",
+        "runner_up": "song_original.runner_up",
+        "fav": "song_original.fav"
+      },
+      "production_design": {
+        "win": "production_design.win",
+        "runner_up": "production_design.runner_up",
+        "fav": "production_design.fav"
+      },
+      "sound": {
+        "win": "sound.win",
+        "runner_up": "sound.runner_up",
+        "fav": "sound.fav"
+      },
+      "visual_effects": {
+        "win": "visual_effects.win",
+        "runner_up": "visual_effects.runner_up",
+        "fav": "visual_effects.fav"
+      }
+    },
+    "lists": {
+      "seen_list": "seen_movies",
+      "to_watch_list": "to_watch_movies"
+    }
+  }
+}

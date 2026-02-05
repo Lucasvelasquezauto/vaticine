@@ -1,0 +1,84 @@
+﻿import { CATEGORIES } from "../../../vault/oscars2026/categories";
+import { MOVIES } from "../../../vault/oscars2026/movies";
+
+export type VotesRow = {
+  category_id: string;
+  win: string | null;
+  second: string | null;
+  fav: string | null;
+};
+
+export type SeenRow = {
+  movie_id: string;
+};
+
+export function buildPdfData(args: {
+  userName: string;
+  printDate: string; // YYYY-MM-DD
+  votes: VotesRow[];
+  seen: SeenRow[];
+}) {
+  const { userName, printDate, votes, seen } = args;
+
+  const categoryById = new Map(CATEGORIES.map((c) => [c.id, c]));
+  const seenSet = new Set(seen.map((s) => s.movie_id));
+
+  // category selections → texto
+  const categoriesOut: Record<
+    string,
+    { win?: string; runner_up?: string; fav?: string }
+  > = {};
+
+  for (const v of votes) {
+    const cat = categoryById.get(v.category_id);
+    if (!cat) continue;
+
+    const nomineeById = new Map(cat.nominees.map((n) => [n.id, n]));
+
+    const winNom = v.win ? nomineeById.get(v.win) : null;
+    const secNom = v.second ? nomineeById.get(v.second) : null;
+    const favNom = v.fav ? nomineeById.get(v.fav) : null;
+
+    categoriesOut[cat.id] = {
+      win: winNom
+        ? winNom.subtitle
+          ? `${winNom.title} — ${winNom.subtitle}`
+          : winNom.title
+        : "",
+      runner_up: secNom
+        ? secNom.subtitle
+          ? `${secNom.title} — ${secNom.subtitle}`
+          : secNom.title
+        : "",
+      fav: favNom
+        ? favNom.subtitle
+          ? `${favNom.title} — ${favNom.subtitle}`
+          : favNom.title
+        : "",
+    };
+  }
+
+  // Listas C:
+  // - seen_movies = todas las del vault que estén en seen_movies
+  // - to_watch_movies = todas las del vault que NO estén en seen_movies
+  const allMovieTitles = MOVIES.map((m) => ({
+    id: m.id,
+    title: m.titleCo && m.titleCo.trim() ? m.titleCo.trim() : m.title,
+  }));
+
+  const seenMovies = allMovieTitles
+    .filter((m) => seenSet.has(m.id))
+    .map((m) => m.title);
+
+  const toWatchMovies = allMovieTitles
+    .filter((m) => !seenSet.has(m.id))
+    .map((m) => m.title);
+
+  return {
+    user_name: userName,
+    print_date: printDate,
+    categories: categoriesOut,
+    seen_movies: seenMovies,
+    to_watch_movies: toWatchMovies,
+  };
+}

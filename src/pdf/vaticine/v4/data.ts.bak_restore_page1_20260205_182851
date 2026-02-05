@@ -1,0 +1,123 @@
+﻿﻿import { CATEGORIES } from "../../../vault/oscars2026/categories";
+import { MOVIES } from "../../../vault/oscars2026/movies";
+
+export type VotesRow = {
+  category_id: string;
+  win: string | null;
+  second: string | null;
+  fav: string | null;
+};
+
+export type SeenRow = {
+  movie_id: string;
+};
+
+function abbreviateOnePerson(fullName: string): string {
+  const raw = (fullName ?? "").trim();
+  if (!raw) return raw;
+
+  const parts = raw.split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return raw;
+
+  const suffixes = new Set(["jr", "jr.", "sr", "sr.", "ii", "iii", "iv"]);
+  const last = parts[parts.length - 1].toLowerCase();
+  const hasSuffix = suffixes.has(last);
+
+  const lastName = hasSuffix ? parts[parts.length - 2] : parts[parts.length - 1];
+  const firstName = parts[0];
+
+  const suffix = hasSuffix ? " " + parts[parts.length - 1] : "";
+  return `${firstName} ${lastName}${suffix}`;
+}
+
+function abbreviatePeopleList(subtitle: string): string {
+  const s = (subtitle ?? "").trim();
+  if (!s) return s;
+
+  const delim = s.includes(";") ? ";" : ",";
+  const parts = s.split(delim).map((p) => p.trim()).filter(Boolean);
+
+  if (parts.length <= 1) return abbreviateOnePerson(s);
+
+  const abbr = parts.map((p) => abbreviateOnePerson(p));
+  return abbr.join(delim + " ");
+}
+
+function formatNomineeLine(categoryId: string, nomineeId: string | null) {
+  if (!nomineeId) return null;
+
+  const cat = CATEGORIES.find((c) => c.id === categoryId);
+  if (!cat) return null;
+
+  const nom = (cat.nominees ?? []).find((n: any) => n.id === nomineeId);
+  if (!nom) return null;
+
+  const title = (nom.title ?? "").trim();
+  const sub = (nom.subtitle ?? "").trim();
+
+  // Abreviar nombres SOLO en Mejor Canción (id: original_song)
+  const subtitleOut = categoryId === "original_song" ? abbreviatePeopleList(sub) : sub;
+
+  return subtitleOut ? `${title} — ${subtitleOut}` : title;
+}
+
+export function buildPdfData(opts: {
+  userName: string;
+  printDate: string;
+
+  // Forma nueva (preferida)
+  votesRows?: VotesRow[];
+  seenRows?: SeenRow[];
+
+  // Compatibilidad con forma antigua (route.ts actual)
+  votes?: VotesRow[];
+  seen?: SeenRow[];
+}) {
+  const votesRows = (opts.votesRows ?? opts.votes ?? []) as VotesRow[];
+  const seenRows = (opts.seenRows ?? opts.seen ?? []) as SeenRow[];
+
+  const { userName, printDate } = opts;
+
+  const seenSet = new Set(seenRows.map((r) => r.movie_id));
+
+  // IMPORTANTE: categories debe ser Record<string, { win?, runner_up?, fav? }>
+  const categories: Record<
+    string,
+    { win?: string | null; runner_up?: string | null; fav?: string | null }
+  > = {};
+
+  for (const cat of CATEGORIES) {
+    const row = votesRows.find((r) => r.category_id === cat.id);
+
+    categories[cat.id] = {
+      win: formatNomineeLine(cat.id, row?.win ?? null),
+      runner_up: formatNomineeLine(cat.id, row?.second ?? null),
+      fav: formatNomineeLine(cat.id, row?.fav ?? null),
+    };
+  }
+
+  // Excluir cortometrajes de "Vistas" y "Por ver"
+  const shortCategoryIds = new Set(["animated_short", "documentary_short", "live_action_short"]);
+  const shortMovieIds = new Set(
+    CATEGORIES.filter((c) => shortCategoryIds.has(c.id))
+      .flatMap((c) => c.nominees ?? [])
+      .map((n: any) => n?.movieId)
+      .filter((id: any) => typeof id === "string" && id.length > 0)
+  );
+
+  const allMovieTitles = MOVIES.filter((m) => !shortMovieIds.has(m.id)).map((m) => ({
+    id: m.id,
+    title: m.titleCo && m.titleCo.trim() ? m.titleCo.trim() : m.title,
+  }));
+
+  const seenMovies = allMovieTitles.filter((m) => seenSet.has(m.id)).map((m) => m.title);
+  const toWatchMovies = allMovieTitles.filter((m) => !seenSet.has(m.id)).map((m) => m.title);
+
+  return {
+    user_name: userName,
+    print_date: printDate,
+    categories,
+    seen_movies: seenMovies,
+    to_watch_movies: toWatchMovies,
+  };
+}
